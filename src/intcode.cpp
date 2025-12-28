@@ -1,5 +1,7 @@
 #include <vector>
 #include <sstream>
+#include <cassert>
+#include "intcode.hpp"
 
 struct Param {
     int mode;
@@ -20,6 +22,9 @@ std::vector<int> parse_prog(const std::string &line) {
     }
     return codes;
 }
+
+Program::Program(const std::string &prog_line)
+    : codes(parse_prog(prog_line)), ip(0), halted(false) {}
 
 int num_params_for_opcode(int opcode) {
     switch (opcode) {
@@ -75,10 +80,14 @@ int write_to(std::vector<int> &codes, const Param &param, int value) {
     return 0;
 }
 
-std::vector<int> run_prog(std::vector<int> &codes, std::vector<int> inputs) {
+void Program::send_input(int value) {
+    inputs.push(value);
+}
+
+bool Program::run_until_output() {
+    assert(!halted);
     int input_idx = 0;
-    std::vector<int> outputs;
-    for (int ip = 0; codes[ip] != 99;) {
+    while (codes[ip] != 99) {
         Inst inst = parse_inst(codes, ip);
         switch (inst.opcode) {
             case 1:
@@ -99,16 +108,16 @@ std::vector<int> run_prog(std::vector<int> &codes, std::vector<int> inputs) {
                 break;
             }
             case 3: {
-                write_to(codes, inst.params[0], inputs[input_idx]);
-                input_idx++;
+                write_to(codes, inst.params[0], inputs.front());
+                inputs.pop();
                 ip += num_params_for_opcode(inst.opcode) + 1;
                 break;
             }
             case 4: {
                 int val = eval_param(codes, inst.params[0]);
-                outputs.push_back(val);
+                outputs.push(val);
                 ip += num_params_for_opcode(inst.opcode) + 1;
-                break;
+                return true;
             }
             case 5:
             case 6: {
@@ -125,5 +134,12 @@ std::vector<int> run_prog(std::vector<int> &codes, std::vector<int> inputs) {
                 throw std::invalid_argument("Unknown opcode");
         }
     }
-    return outputs;
+    halted = true;
+    return false;
+}
+
+void Program::run() {
+    while (!halted) {
+        run_until_output();
+    }
 }

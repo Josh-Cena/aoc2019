@@ -2,13 +2,15 @@
 #include "intcode.hpp"
 
 void solve1(std::vector<std::string> data) {
-    auto codes = parse_prog(data[0]);
-    auto res = run_prog(codes, {1});
-    std::cout << res.back() << std::endl;
+    Program prog(data[0]);
+    prog.send_input(1);
+    prog.run();
+    std::cout << prog.outputs.back() << std::endl;
 }
 
 void solve2(std::vector<std::string> data) {
-    auto codes = parse_prog(data[0]);
-    auto res = run_prog(codes, {5});
-    std::cout << res.back() << std::endl;
+    Program prog(data[0]);
+    prog.send_input(5);
+    prog.run();
+    std::cout << prog.outputs.back() << std::endl;
 }
