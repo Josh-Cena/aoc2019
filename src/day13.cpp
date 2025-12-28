@@ -91,5 +91,6 @@ void solve2(std::vector<std::string> data) {
             input = 0;
         }
         prog.send_input(input);
+        prog.step();
     }
 }

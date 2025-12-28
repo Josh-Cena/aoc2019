@@ -161,15 +161,15 @@ void Program::step() {
 }
 
 void Program::run_until_input() {
-    do {
+    while (!(halted || parse_inst().opcode == 3)) {
         step();
-    } while (!(halted || parse_inst().opcode == 3));
+    }
 }
 
 void Program::run_until_output() {
-    do {
+    while (!(halted || !outputs.empty())) {
         step();
-    } while (!(halted || !outputs.empty()));
+    }
 }
 
 void Program::run() {
