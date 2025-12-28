@@ -102,68 +102,78 @@ void Program::send_input(long long value) {
     inputs.push(value);
 }
 
-bool Program::run_until_output() {
+void Program::step() {
     assert(!halted);
-    int input_idx = 0;
-    while (memory[ip] != 99) {
-        Inst inst = parse_inst();
-        switch (inst.opcode) {
-            case 1:
-            case 2:
-            case 7:
-            case 8: {
-                long long val1 = eval_param(inst.params[0]);
-                long long val2 = eval_param(inst.params[1]);
-                long long res = inst.opcode == 1
-                    ? val1 + val2
-                    : inst.opcode == 2
-                    ? val1 * val2
-                    : inst.opcode == 7
-                    ? (val1 < val2 ? 1 : 0)
-                    : (val1 == val2 ? 1 : 0);
-                write_to(inst.params[2], res);
-                ip += num_params_for_opcode(inst.opcode) + 1;
-                break;
-            }
-            case 3: {
-                write_to(inst.params[0], inputs.front());
-                inputs.pop();
-                ip += num_params_for_opcode(inst.opcode) + 1;
-                break;
-            }
-            case 4: {
-                long long val = eval_param(inst.params[0]);
-                outputs.push(val);
-                ip += num_params_for_opcode(inst.opcode) + 1;
-                return true;
-            }
-            case 5:
-            case 6: {
-                long long val = eval_param(inst.params[0]);
-                bool should_jump = inst.opcode == 5 ? (val != 0) : (val == 0);
-                if (should_jump) {
-                    ip = eval_param(inst.params[1]);
-                } else {
-                    ip += num_params_for_opcode(inst.opcode) + 1;
-                }
-                break;
-            }
-            case 9: {
-                long long val = eval_param(inst.params[0]);
-                relative_base += val;
-                ip += num_params_for_opcode(inst.opcode) + 1;
-                break;
-            }
-            default:
-                throw std::invalid_argument("Unknown opcode");
+    Inst inst = parse_inst();
+    switch (inst.opcode) {
+        case 1:
+        case 2:
+        case 7:
+        case 8: {
+            long long val1 = eval_param(inst.params[0]);
+            long long val2 = eval_param(inst.params[1]);
+            long long res = inst.opcode == 1
+                ? val1 + val2
+                : inst.opcode == 2
+                ? val1 * val2
+                : inst.opcode == 7
+                ? (val1 < val2 ? 1 : 0)
+                : (val1 == val2 ? 1 : 0);
+            write_to(inst.params[2], res);
+            ip += num_params_for_opcode(inst.opcode) + 1;
+            break;
         }
+        case 3: {
+            write_to(inst.params[0], inputs.front());
+            inputs.pop();
+            ip += num_params_for_opcode(inst.opcode) + 1;
+            break;
+        }
+        case 4: {
+            long long val = eval_param(inst.params[0]);
+            outputs.push(val);
+            ip += num_params_for_opcode(inst.opcode) + 1;
+            break;
+        }
+        case 5:
+        case 6: {
+            long long val = eval_param(inst.params[0]);
+            bool should_jump = inst.opcode == 5 ? (val != 0) : (val == 0);
+            if (should_jump) {
+                ip = eval_param(inst.params[1]);
+            } else {
+                ip += num_params_for_opcode(inst.opcode) + 1;
+            }
+            break;
+        }
+        case 9: {
+            long long val = eval_param(inst.params[0]);
+            relative_base += val;
+            ip += num_params_for_opcode(inst.opcode) + 1;
+            break;
+        }
+        case 99:
+            halted = true;
+            break;
+        default:
+            throw std::invalid_argument("Unknown opcode");
     }
-    halted = true;
-    return false;
+}
+
+void Program::run_until_input() {
+    do {
+        step();
+    } while (!(halted || parse_inst().opcode == 3));
+}
+
+void Program::run_until_output() {
+    do {
+        step();
+    } while (!(halted || !outputs.empty()));
 }
 
 void Program::run() {
     while (!halted) {
-        run_until_output();
+        step();
     }
 }

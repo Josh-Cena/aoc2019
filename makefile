@@ -8,7 +8,7 @@ INPUT := $(word 3,$(ARGS))
 
 OBJS := bin/main.o bin/day$(DAY).o
 HEADERS :=
-ifneq ($(filter 2 5 7 9,$(DAY)),)
+ifneq ($(filter 2 5 7 9 13,$(DAY)),)
 	OBJS += bin/intcode.o
 	HEADERS += src/intcode.hpp
 endif
