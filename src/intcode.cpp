@@ -1,11 +1,12 @@
 #include <vector>
+#include <map>
 #include <sstream>
 #include <cassert>
 #include "intcode.hpp"
 
 struct Param {
     int mode;
-    int value;
+    long long value;
 };
 
 struct Inst {
@@ -13,18 +14,19 @@ struct Inst {
     std::vector<Param> params;
 };
 
-std::vector<int> parse_prog(const std::string &line) {
-    std::vector<int> codes;
+std::map<long long, long long> parse_prog(const std::string &line) {
+    std::map<long long, long long> memory;
     std::stringstream ss(line);
     std::string part;
+    long long address = 0;
     while (std::getline(ss, part, ',')) {
-        codes.push_back(std::stoi(part));
+        memory[address++] = std::stoll(part);
     }
-    return codes;
+    return memory;
 }
 
 Program::Program(const std::string &prog_line)
-    : codes(parse_prog(prog_line)), ip(0), halted(false) {}
+    : memory(parse_prog(prog_line)), ip(0), halted(false), relative_base(0) {}
 
 int num_params_for_opcode(int opcode) {
     switch (opcode) {
@@ -35,6 +37,7 @@ int num_params_for_opcode(int opcode) {
             return 3;
         case 3:
         case 4:
+        case 9:
             return 1;
         case 5:
         case 6:
@@ -46,8 +49,8 @@ int num_params_for_opcode(int opcode) {
     }
 }
 
-Inst parse_inst(const std::vector<int> &codes, int ip) {
-    int raw_opcode = codes[ip];
+Inst Program::parse_inst() {
+    long long raw_opcode = memory[ip];
     Inst inst;
     inst.opcode = raw_opcode % 100;
     int param_modes = raw_opcode / 100;
@@ -55,79 +58,100 @@ Inst parse_inst(const std::vector<int> &codes, int ip) {
     for (int i = 0; i < num_params; i++) {
         Param param;
         param.mode = param_modes % 10;
-        param.value = codes[ip + 1 + i];
+        param.value = memory[ip + 1 + i];
         inst.params.push_back(param);
         param_modes /= 10;
     }
     return inst;
 }
 
-int eval_param(const std::vector<int> &codes, const Param &param) {
-    if (param.mode == 0) {
-        return codes[param.value];
-    } else if (param.mode == 1) {
+long long Program::eval_param(const Param &param) {
+    if (param.mode == 1) {
         return param.value;
+    } else if (param.mode == 0 || param.mode == 2) {
+        long long addr = param.value;
+        if (param.mode == 2) {
+            addr += relative_base;
+        }
+        if (addr < 0) {
+            throw std::invalid_argument("Negative memory access");
+        } else if (memory.find(addr) == memory.end()) {
+            return 0;
+        }
+        return memory[addr];
     } else {
         throw std::invalid_argument("Unknown parameter mode");
     }
 }
 
-int write_to(std::vector<int> &codes, const Param &param, int value) {
-    if (param.mode != 0) {
-        throw std::invalid_argument("Write parameter must be in position mode");
+void Program::write_to(const Param &param, long long value) {
+    if (param.mode == 1) {
+        throw std::invalid_argument("Write parameter cannot be immediate");
     }
-    codes[param.value] = value;
-    return 0;
+    long long addr = param.value;
+    if (param.mode == 2) {
+        addr += relative_base;
+    }
+    if (addr < 0) {
+        throw std::invalid_argument("Negative memory access");
+    }
+    memory[addr] = value;
 }
 
-void Program::send_input(int value) {
+void Program::send_input(long long value) {
     inputs.push(value);
 }
 
 bool Program::run_until_output() {
     assert(!halted);
     int input_idx = 0;
-    while (codes[ip] != 99) {
-        Inst inst = parse_inst(codes, ip);
+    while (memory[ip] != 99) {
+        Inst inst = parse_inst();
         switch (inst.opcode) {
             case 1:
             case 2:
             case 7:
             case 8: {
-                int val1 = eval_param(codes, inst.params[0]);
-                int val2 = eval_param(codes, inst.params[1]);
-                int res = inst.opcode == 1
+                long long val1 = eval_param(inst.params[0]);
+                long long val2 = eval_param(inst.params[1]);
+                long long res = inst.opcode == 1
                     ? val1 + val2
                     : inst.opcode == 2
                     ? val1 * val2
                     : inst.opcode == 7
                     ? (val1 < val2 ? 1 : 0)
                     : (val1 == val2 ? 1 : 0);
-                write_to(codes, inst.params[2], res);
+                write_to(inst.params[2], res);
                 ip += num_params_for_opcode(inst.opcode) + 1;
                 break;
             }
             case 3: {
-                write_to(codes, inst.params[0], inputs.front());
+                write_to(inst.params[0], inputs.front());
                 inputs.pop();
                 ip += num_params_for_opcode(inst.opcode) + 1;
                 break;
             }
             case 4: {
-                int val = eval_param(codes, inst.params[0]);
+                long long val = eval_param(inst.params[0]);
                 outputs.push(val);
                 ip += num_params_for_opcode(inst.opcode) + 1;
                 return true;
             }
             case 5:
             case 6: {
-                int val = eval_param(codes, inst.params[0]);
+                long long val = eval_param(inst.params[0]);
                 bool should_jump = inst.opcode == 5 ? (val != 0) : (val == 0);
                 if (should_jump) {
-                    ip = eval_param(codes, inst.params[1]);
+                    ip = eval_param(inst.params[1]);
                 } else {
                     ip += num_params_for_opcode(inst.opcode) + 1;
                 }
+                break;
+            }
+            case 9: {
+                long long val = eval_param(inst.params[0]);
+                relative_base += val;
+                ip += num_params_for_opcode(inst.opcode) + 1;
                 break;
             }
             default:

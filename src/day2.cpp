@@ -3,10 +3,10 @@
 
 void solve1(std::vector<std::string> data) {
     Program prog(data[0]);
-    prog.codes[1] = 12;
-    prog.codes[2] = 2;
+    prog.memory[1] = 12;
+    prog.memory[2] = 2;
     prog.run();
-    std::cout << prog.codes[0] << std::endl;
+    std::cout << prog.memory[0] << std::endl;
 }
 
 void solve2(std::vector<std::string> data) {
@@ -14,10 +14,10 @@ void solve2(std::vector<std::string> data) {
     for (int noun = 0; noun < 100; noun++) {
         for (int verb = 0; verb < 100; verb++) {
             Program prog(base_prog);
-            prog.codes[1] = noun;
-            prog.codes[2] = verb;
+            prog.memory[1] = noun;
+            prog.memory[2] = verb;
             prog.run();
-            if (prog.codes[0] == 19690720) {
+            if (prog.memory[0] == 19690720) {
                 std::cout << 100 * noun + verb << std::endl;
             }
         }
