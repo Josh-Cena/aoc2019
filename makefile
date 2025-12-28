@@ -9,9 +9,17 @@ INPUT := $(word 3,$(ARGS))
 run: bin/aoc2019
 	./bin/aoc2019 $(DAY) $(PROB) $(INPUT)
 
-bin/aoc2019: src/main.cpp src/day$(DAY).cpp
+bin/aoc2019: bin/main.o bin/day$(DAY).o | bin
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+bin/main.o: src/main.cpp | bin
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+bin/day$(DAY).o: src/day$(DAY).cpp | bin
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+bin:
 	mkdir -p bin
-	$(CXX) $(CXXFLAGS) src/main.cpp src/day$(DAY).cpp -o bin/aoc2019
 
 %:
 	@:
