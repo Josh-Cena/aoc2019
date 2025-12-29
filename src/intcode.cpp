@@ -26,7 +26,7 @@ std::map<long long, long long> parse_prog(const std::string &line) {
 }
 
 Program::Program(const std::string &prog_line)
-    : memory(parse_prog(prog_line)), ip(0), halted(false), relative_base(0) {}
+    : memory(parse_prog(prog_line)) {}
 
 int num_params_for_opcode(int opcode) {
     switch (opcode) {
@@ -124,11 +124,17 @@ void Program::step() {
             break;
         }
         case 3: {
+            long long input = default_input;
             if (inputs.empty()) {
-                throw std::runtime_error("Input expected but not available");
+                if (default_input == 0xDEAD)
+                    throw std::runtime_error("Input expected but not available");
+                starved_cycles++;
+            } else {
+                starved_cycles = 0;
+                input = inputs.front();
+                inputs.pop();
             }
-            write_to(inst.params[0], inputs.front());
-            inputs.pop();
+            write_to(inst.params[0], input);
             ip += num_params_for_opcode(inst.opcode) + 1;
             break;
         }
