@@ -124,6 +124,9 @@ void Program::step() {
             break;
         }
         case 3: {
+            if (inputs.empty()) {
+                throw std::runtime_error("Input expected but not available");
+            }
             write_to(inst.params[0], inputs.front());
             inputs.pop();
             ip += num_params_for_opcode(inst.opcode) + 1;
