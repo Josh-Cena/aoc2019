@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++14 -O2
+CXXFLAGS := -std=c++17 -O2
 LDFLAGS :=
 
 ifneq ($(DEBUG),)
