@@ -38,14 +38,13 @@ void solve2(std::vector<std::string> data) {
     std::unordered_map<std::string, bool> visited;
     to_visit.push({"YOU", 0});
     visited["YOU"] = true;
-    int dist = 0;
     while (!to_visit.empty()) {
         auto current = to_visit.front();
         to_visit.pop();
         std::string node = current.first;
         int depth = current.second;
         if (node == "SAN") {
-            dist = depth - 2; // Not count start/end nodes
+            std::cout << depth - 2 << std::endl; // Not count start/end nodes
             break;
         }
         for (auto neighbor : connected[node]) {
@@ -55,5 +54,4 @@ void solve2(std::vector<std::string> data) {
             }
         }
     }
-    std::cout << dist << std::endl;
 }

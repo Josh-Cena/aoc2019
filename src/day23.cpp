@@ -12,15 +12,12 @@ void solve1(std::vector<std::string> data) {
         for (int i = 0; i < 50; i++) {
             Program &prog = network[i];
             prog.step();
-            if (!prog.outputs.empty()) {
-                long long dest = prog.outputs.front();
-                prog.outputs.pop();
+            if (prog.has_output()) {
+                long long dest = prog.pop_output();
                 prog.run_until_output();
-                long long x = prog.outputs.front();
-                prog.outputs.pop();
+                long long x = prog.pop_output();
                 prog.run_until_output();
-                long long y = prog.outputs.front();
-                prog.outputs.pop();
+                long long y = prog.pop_output();
                 if (dest == 255) {
                     std::cout << y << std::endl;
                     return;
@@ -45,15 +42,12 @@ void solve2(std::vector<std::string> data) {
         for (int i = 0; i < 50; i++) {
             Program &prog = network[i];
             prog.step();
-            if (!prog.outputs.empty()) {
-                long long dest = prog.outputs.front();
-                prog.outputs.pop();
+            if (prog.has_output()) {
+                long long dest = prog.pop_output();
                 prog.run_until_output();
-                long long x = prog.outputs.front();
-                prog.outputs.pop();
+                long long x = prog.pop_output();
                 prog.run_until_output();
-                long long y = prog.outputs.front();
-                prog.outputs.pop();
+                long long y = prog.pop_output();
                 if (dest == 255) {
                     nat_packet = {x, y};
                 } else {
@@ -72,7 +66,6 @@ void solve2(std::vector<std::string> data) {
         if (all_idle && nat_packet.first != -1) {
             network[0].send_input(nat_packet.first);
             network[0].send_input(nat_packet.second);
-            network[0].starved_cycles = 0;
             if (nat_packet.second == last_y_sent) {
                 std::cout << nat_packet.second << std::endl;
                 return;

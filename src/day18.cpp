@@ -47,7 +47,6 @@ std::map<char, std::map<char, int>> build_graph(const std::vector<std::string> &
     return dists;
 }
 
-
 // The maze is a graph of states (location, collectedKeys), where location
 // is either a key or a door.
 // Edges go to (key', collectedKeys + [key']) and (door, collectedKeys)
@@ -74,19 +73,20 @@ std::vector<std::pair<std::pair<char, int>, int>> get_neighbors_single(
     return neighbors;
 }
 
-std::vector<std::pair<std::pair<std::array<char, 4>, int>, int>> get_neighbors_multi(
+std::vector<std::pair<std::pair<int, int>, int>> get_neighbors_multi(
     const std::map<char, std::map<char, int>> &graph,
-    const std::pair<std::array<char, 4>, int> &state
+    const std::pair<int, int> &state
 ) {
-    std::vector<std::pair<std::pair<std::array<char, 4>, int>, int>> neighbors;
+    std::vector<std::pair<std::pair<int, int>, int>> neighbors;
     auto [nodes, keys_mask] = state;
     for (int i = 0; i < 4; i++) {
-        char node = nodes[i];
+        char node = (nodes >> (i * 8)) & 0xFF;
         for (const auto &[neighbor_state, weight] : get_neighbors_single(
             graph, {node, keys_mask}
         )) {
-            std::array<char, 4> new_nodes = nodes;
-            new_nodes[i] = neighbor_state.first;
+            int new_nodes = nodes;
+            new_nodes &= ~(0xFF << (i * 8));
+            new_nodes |= (neighbor_state.first << (i * 8));
             neighbors.push_back({{new_nodes, neighbor_state.second}, weight});
         }
     }
@@ -169,8 +169,8 @@ void solve2(std::vector<std::string> data) {
     }
 
     std::map<char, std::map<char, int>> dists = build_graph(data);
-    std::array<char, 4> starts = {'1', '2', '3', '4'};
-    int dist = dijkstra<std::pair<std::array<char, 4>, int>>(
+    int starts = ('1' << 0) | ('2' << 8) | ('3' << 16) | ('4' << 24);
+    int dist = dijkstra<std::pair<int, int>>(
         dists, {starts, 0}, get_neighbors_multi
     );
     std::cout << dist << std::endl;

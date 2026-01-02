@@ -1,8 +1,8 @@
 #include <iostream>
 #include <set>
 
-typedef std::pair<int, int> CellGrid;
-typedef std::tuple<int, int, int> CellRec; // (row, col, level)
+using CellGrid = std::pair<int, int>;
+using CellRec = std::tuple<int, int, int>; // (row, col, level)
 
 std::vector<CellGrid> neighbors_grid(CellGrid cell) {
     auto [r, c] = cell;
@@ -93,7 +93,7 @@ std::vector<CellRec> neighbors_recursive(CellRec cell) {
 
 template<typename T>
 std::set<T> evolve(
-    const std::set<T>& bugs, 
+    const std::set<T> &bugs, 
     std::vector<T> (*get_neighbors)(T)
 ) {
     std::set<T> new_bugs;

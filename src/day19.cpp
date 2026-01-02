@@ -7,7 +7,7 @@ bool has_beam(const Program &base_prog, int x, int y) {
     prog.send_input(x);
     prog.send_input(y);
     prog.run();
-    return prog.outputs.front() == 1;
+    return prog.pop_output() == 1;
 }
 
 void solve1(std::vector<std::string> data) {

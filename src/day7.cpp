@@ -7,17 +7,18 @@ void solve1(std::vector<std::string> data) {
     std::vector<int> phase_settings = {0, 1, 2, 3, 4};
     int max_output = 0;
     do {
-        int input_signal = 0;
+        std::vector<Program> progs;
         for (int phase : phase_settings) {
-            Program prog(base_prog);
-            prog.send_input(phase);
+            progs.emplace_back(base_prog);
+            progs.back().send_input(phase);
+        }
+        int input_signal = 0;
+        for (auto &prog : progs) {
             prog.send_input(input_signal);
             prog.run();
-            input_signal = prog.outputs.back();
+            input_signal = prog.pop_output();
         }
-        if (input_signal > max_output) {
-            max_output = input_signal;
-        }
+        max_output = std::max(max_output, input_signal);
     } while (std::next_permutation(phase_settings.begin(), phase_settings.end()));
     std::cout << max_output << std::endl;
 }
@@ -29,9 +30,8 @@ void solve2(std::vector<std::string> data) {
     do {
         std::vector<Program> progs;
         for (int phase : phase_settings) {
-            Program prog(base_prog);
-            prog.send_input(phase);
-            progs.push_back(prog);
+            progs.emplace_back(base_prog);
+            progs.back().send_input(phase);
         }
         int input_signal = 0;
         bool all_halted = false;
@@ -40,18 +40,12 @@ void solve2(std::vector<std::string> data) {
             for (auto &prog : progs) {
                 prog.send_input(input_signal);
                 prog.run_until_output();
-                if (!prog.halted) {
-                    all_halted = false;
-                }
-                if (!prog.outputs.empty()) {
-                    input_signal = prog.outputs.back();
-                    prog.outputs.pop();
-                }
+                if (prog.halted) break;
+                all_halted = false;
+                input_signal = prog.pop_output();
             }
         }
-        if (input_signal > max_output) {
-            max_output = input_signal;
-        }
+        max_output = std::max(max_output, input_signal);
     } while (std::next_permutation(phase_settings.begin(), phase_settings.end()));
     std::cout << max_output << std::endl;
 }

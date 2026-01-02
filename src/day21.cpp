@@ -16,11 +16,15 @@ void solve1(std::vector<std::string> data) {
         "NOT T J\n"
         "AND D J\n"
         "WALK\n";
-    for (char c : spring_code) {
-        prog.send_input(c);
-    }
+    prog.send_input(spring_code);
     prog.run();
-    std::cout << prog.outputs.back() << std::endl;
+    long long output = prog.peek_last_output();
+    if (output > 255) {
+        std::cout << output << std::endl;
+    } else {
+        std::string output = prog.pop_str_output();
+        std::cout << output;
+    }
 }
 
 // With additional range, we can fix the following issue:
@@ -44,9 +48,13 @@ void solve2(std::vector<std::string> data) {
         "OR H T\n"
         "AND T J\n"
         "RUN\n";
-    for (char c : spring_code) {
-        prog.send_input(c);
-    }
+    prog.send_input(spring_code);
     prog.run();
-    std::cout << prog.outputs.back() << std::endl;
+    long long output = prog.peek_last_output();
+    if (output > 255) {
+        std::cout << output << std::endl;
+    } else {
+        std::string output = prog.pop_str_output();
+        std::cout << output;
+    }
 }

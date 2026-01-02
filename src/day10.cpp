@@ -4,7 +4,7 @@
 #include <numeric>
 #include <algorithm>
 
-typedef std::map<std::pair<int, int>, std::vector<std::pair<int, int>>> direction_map;
+using direction_map = std::map<std::pair<int, int>, std::vector<std::pair<int, int>>>;
 
 direction_map locate_station(const std::set<std::pair<int, int>> &asteroids) {
     int max_visible = 0;

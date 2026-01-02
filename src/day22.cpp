@@ -66,11 +66,11 @@ public:
 // deal_with_increment_k(x) = x * k
 // Applying them in sequence is function composition.
 LinearFunction parse_instructions(
-    const std::vector<std::string>& data,
+    const std::vector<std::string> &data,
     long long mod
 ) {
     LinearFunction total_function = {1, 0, mod};
-    for (const auto& line : data) {
+    for (const auto &line : data) {
         if (line == "deal into new stack") {
             LinearFunction inst = {-1, -1, mod};
             total_function = inst.compose(total_function);

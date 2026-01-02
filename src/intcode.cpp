@@ -99,7 +99,52 @@ void Program::write_to(const Param &param, long long value) {
 }
 
 void Program::send_input(long long value) {
+    starved_cycles = 0;
     inputs.push(value);
+}
+
+void Program::send_input(const std::string &str) {
+    for (char c : str) {
+        inputs.push(static_cast<long long>(c));
+    }
+}
+
+long long Program::pop_output() {
+    if (outputs.empty()) {
+        throw std::runtime_error("No output available");
+    }
+    long long value = outputs.front();
+    outputs.pop();
+    return value;
+}
+
+std::vector<long long> Program::pop_all_output() {
+    std::vector<long long> all_outputs;
+    while (!outputs.empty()) {
+        all_outputs.push_back(outputs.front());
+        outputs.pop();
+    }
+    return all_outputs;
+}
+
+std::string Program::pop_str_output() {
+    std::stringstream result;
+    while (!outputs.empty()) {
+        result << static_cast<char>(outputs.front());
+        outputs.pop();
+    }
+    return result.str();
+}
+
+long long Program::peek_last_output() {
+    if (outputs.empty()) {
+        throw std::runtime_error("No output available");
+    }
+    return outputs.back();
+}
+
+bool Program::has_output() const {
+    return !outputs.empty();
 }
 
 void Program::step() {
