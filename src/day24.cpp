@@ -1,8 +1,8 @@
 #include <iostream>
 #include <set>
 
-typedef std::pair<int, int> CellGrid;
-typedef std::tuple<int, int, int> CellRec; // (row, col, level)
+using CellGrid = std::pair<int, int>;
+using CellRec = std::tuple<int, int, int>; // (row, col, level)
 
 std::vector<CellGrid> neighbors_grid(CellGrid cell) {
     auto [r, c] = cell;

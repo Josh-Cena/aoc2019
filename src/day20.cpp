@@ -33,94 +33,31 @@ std::vector<std::tuple<int, int, int, char, char>> donut_edges(
     return edges;
 }
 
-void solve1(std::vector<std::string> data) {
-    int width = data[0].size();
-    int height = data.size();
-    int donut_width;
-    for (int c = width / 2; c > 0; c--) {
-        if (data[height / 2][c] != ' ') {
-            donut_width = c - 1;
-            break;
-        }
-    }
-    std::map<std::pair<int, int>, int> pos_to_portal;
-    std::map<int, std::vector<std::pair<int, int>>> portal_to_poss;
-    for (auto &[r, c, lvl, ch1, ch2] : donut_edges(data, width, height, donut_width)) {
-        if (ch1 >= 'A' && ch1 <= 'Z' && ch2 >= 'A' && ch2 <= 'Z') {
-            int code = portal_code(ch1, ch2);
-            pos_to_portal[{r, c}] = code;
-            portal_to_poss[code].emplace_back(r, c);
-        }
-    }
-    std::pair<int, int> start_pos = portal_to_poss[portal_code('A', 'A')][0];
-    std::pair<int, int> end_pos = portal_to_poss[portal_code('Z', 'Z')][0];
-    // AA and ZZ aren't real portals
-    portal_to_poss.erase(portal_code('A', 'A'));
-    portal_to_poss.erase(portal_code('Z', 'Z'));
-    pos_to_portal.erase(start_pos);
-    pos_to_portal.erase(end_pos);
-    std::queue<std::pair<int, int>> queue;
-    std::map<std::pair<int, int>, int> dist;
-    queue.push(start_pos);
-    dist[start_pos] = 0;
-    const std::vector<std::pair<int, int>> directions = {
-        {1, 0}, {-1, 0}, {0, 1}, {0, -1}
-    };
-    while (!queue.empty()) {
-        auto [cr, cc] = queue.front();
-        queue.pop();
-        int cd = dist[{cr, cc}];
-        for (const auto &[dr, dc] : directions) {
-            int nr = cr + dr;
-            int nc = cc + dc;
-            std::pair<int, int> neighbor_pos = {nr, nc};
-            if (nr >= 0 && nr < height && nc >= 0 && nc < width &&
-                    data[nr][nc] == '.' &&
-                    dist.find(neighbor_pos) == dist.end()) {
-                if (nr == end_pos.first && nc == end_pos.second) {
-                    std::cout << cd + 1 << std::endl;
-                    return;
-                }
-                dist[neighbor_pos] = cd + 1;
-                queue.push(neighbor_pos);
-            }
-        }
-        auto it = pos_to_portal.find({cr, cc});
-        if (it != pos_to_portal.end()) {
-            int portal = it->second;
-            bool found = false;
-            for (const auto &pos : portal_to_poss[portal]) {
-                auto [pr, pc] = pos;
-                if (pr == cr && pc == cc) continue;
-                found = true;
-                if (dist.find(pos) == dist.end()) {
-                    dist[pos] = cd + 1;
-                    queue.push(pos);
-                }
-            }
-            assert(found);
-        }
-    }
-    throw std::runtime_error("No path found");
-}
-
-void solve2(std::vector<std::string> data) {
-    int width = data[0].size();
-    int height = data.size();
-    int donut_width;
-    for (int c = width / 2; c > 0; c--) {
-        if (data[height / 2][c] != ' ') {
-            donut_width = c - 1;
-            break;
-        }
-    }
+struct Graph {
+    int start_r, start_c, end_r, end_c;
+    int width, height;
+    std::vector<std::string> data;
     std::map<std::pair<int, int>, int> pos_to_portal;
     std::map<int, std::vector<std::tuple<int, int, int>>> portal_to_poss;
+    Graph(const std::vector<std::string> &data, bool recursive);
+    int bfs();
+};
+
+Graph::Graph(const std::vector<std::string> &data, bool recursive) {
+    width = data[0].size();
+    height = data.size();
+    int donut_width;
+    for (int c = width / 2; c > 0; c--) {
+        if (data[height / 2][c] != ' ') {
+            donut_width = c - 1;
+            break;
+        }
+    }
     for (auto &[r, c, dl, ch1, ch2] : donut_edges(data, width, height, donut_width)) {
         if (ch1 >= 'A' && ch1 <= 'Z' && ch2 >= 'A' && ch2 <= 'Z') {
             int code = portal_code(ch1, ch2);
             pos_to_portal[{r, c}] = code;
-            portal_to_poss[code].emplace_back(r, c, dl);
+            portal_to_poss[code].emplace_back(r, c, recursive ? dl : 0);
         }
     }
     auto [start_r, start_c, start_dl] = portal_to_poss[portal_code('A', 'A')][0];
@@ -130,6 +67,14 @@ void solve2(std::vector<std::string> data) {
     portal_to_poss.erase(portal_code('Z', 'Z'));
     pos_to_portal.erase({start_r, start_c});
     pos_to_portal.erase({end_r, end_c});
+    this->start_r = start_r;
+    this->start_c = start_c;
+    this->end_r = end_r;
+    this->end_c = end_c;
+    this->data = data;
+}
+
+int Graph::bfs() {
     std::queue<std::tuple<int, int, int>> queue;
     std::map<std::tuple<int, int, int>, int> dist;
     queue.push({start_r, start_c, 0});
@@ -149,8 +94,7 @@ void solve2(std::vector<std::string> data) {
                     data[nr][nc] == '.' &&
                     dist.find(neighbor_pos) == dist.end()) {
                 if (nr == end_r && nc == end_c && cl == 0) {
-                    std::cout << cd + 1 << std::endl;
-                    return;
+                    return cd + 1;
                 }
                 dist[neighbor_pos] = cd + 1;
                 queue.push(neighbor_pos);
@@ -160,7 +104,7 @@ void solve2(std::vector<std::string> data) {
         if (it != pos_to_portal.end()) {
             int portal = it->second;
             bool found = false;
-            for (const auto [pr, pc, dl] : portal_to_poss[portal]) {
+            for (const auto [pr, pc, dl] : portal_to_poss.at(portal)) {
                 if (pr == cr && pc == cc) continue;
                 found = true;
                 int pl = cl + dl;
@@ -175,4 +119,16 @@ void solve2(std::vector<std::string> data) {
         }
     }
     throw std::runtime_error("No path found");
+}
+
+void solve1(std::vector<std::string> data) {
+    Graph graph = Graph(data, false);
+    int dist = graph.bfs();
+    std::cout << dist << std::endl;
+}
+
+void solve2(std::vector<std::string> data) {
+    Graph graph = Graph(data, true);
+    int dist = graph.bfs();
+    std::cout << dist << std::endl;
 }

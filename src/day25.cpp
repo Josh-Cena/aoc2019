@@ -3,30 +3,16 @@
 #include "intcode.hpp"
 
 std::string start_prog(Program &prog) {
-    std::ostringstream oss;
     prog.run_until_input();
-    while (!prog.outputs.empty()) {
-        char c = static_cast<char>(prog.outputs.front());
-        prog.outputs.pop();
-        oss << c;
-    }
-    return oss.str();
+    return prog.pop_str_output();
 }
 
 std::string exchange_msg(Program &prog, const std::string &msg) {
-    std::ostringstream oss;
-    for (char c : msg) {
-        prog.send_input(static_cast<long long>(c));
-    }
-    prog.send_input(static_cast<long long>('\n'));
+    prog.send_input(msg);
+    prog.send_input('\n');
     prog.run_until_output();
     prog.run_until_input();
-    while (!prog.outputs.empty()) {
-        char c = static_cast<char>(prog.outputs.front());
-        prog.outputs.pop();
-        oss << c;
-    }
-    return oss.str();
+    return prog.pop_str_output();
 }
 
 void solve1(std::vector<std::string> data) {

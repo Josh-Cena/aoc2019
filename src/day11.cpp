@@ -3,7 +3,6 @@
 #include "intcode.hpp"
 
 void print_screen(const std::map<std::pair<int, int>, int> &panels) {
-    std::cout << "\033[2J\033[H";
     int min_x = INT_MAX, max_x = INT_MIN;
     int min_y = INT_MAX, max_y = INT_MIN;
     for (const auto &entry : panels) {
@@ -29,15 +28,12 @@ void paint(std::map<std::pair<int, int>, int> &panels, std::string line) {
     int x = 0, y = 0;
     int dir_x = 0, dir_y = -1;
     while (!prog.halted) {
-        prog.run_until_input();
         prog.send_input(panels.find({x, y}) != panels.end() ? panels[{x, y}] : 0);
         prog.run_until_output();
-        int color = prog.outputs.back();
-        prog.outputs.pop();
-        panels[{x, y}] = color;
+        if (prog.halted) break;
+        panels[{x, y}] = prog.pop_output();
         prog.run_until_output();
-        int turn = prog.outputs.back();
-        prog.outputs.pop();
+        int turn = prog.pop_output();
         if (turn == 0) {
             int tmp = dir_x;
             dir_x = dir_y;

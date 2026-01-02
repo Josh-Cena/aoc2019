@@ -80,12 +80,12 @@ std::map<std::pair<int, int>, int> distance_from_oxygen(std::vector<std::string>
             direction = opposite_dir(last_dir);
             prog.send_input(direction);
             prog.run_until_output();
-            prog.outputs.pop(); // Already know what it is
+            prog.pop_output(); // Already know what it is
             pos = move_in_dir(pos, direction);
         } else {
             prog.send_input(direction);
             prog.run_until_output();
-            long long status = prog.outputs.front(); prog.outputs.pop();
+            long long status = prog.pop_output();
             std::pair<int, int> npos = move_in_dir(pos, direction);
             if (status == 2) {
                 pos = npos;

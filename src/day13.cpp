@@ -7,10 +7,9 @@ void solve1(std::vector<std::string> data) {
     Program prog(data[0]);
     prog.run();
     int block_count = 0;
-    while (!prog.outputs.empty()) {
-        long long x = prog.outputs.front(); prog.outputs.pop();
-        long long y = prog.outputs.front(); prog.outputs.pop();
-        long long tile_id = prog.outputs.front(); prog.outputs.pop();
+    std::vector<long long> outputs = prog.pop_all_output();
+    for (int i = 2; i < outputs.size(); i += 3) {
+        long long tile_id = outputs[i];
         if (tile_id == 2) {
             block_count++;
         }
@@ -54,7 +53,6 @@ void print_screen(const std::map<std::pair<int, int>, int> &screen) {
 void solve2(std::vector<std::string> data) {
     Program prog(data[0]);
     prog.memory[0] = 2;
-    int input = 0;
     std::map<std::pair<int, int>, int> screen;
     bool visualize = std::getenv("VISUALIZE") != nullptr;
     while (true) {
@@ -62,10 +60,11 @@ void solve2(std::vector<std::string> data) {
         int ball_pos;
         int paddle_pos;
         int score;
-        while (!prog.outputs.empty()) {
-            long long x = prog.outputs.front(); prog.outputs.pop();
-            long long y = prog.outputs.front(); prog.outputs.pop();
-            long long tile_id = prog.outputs.front(); prog.outputs.pop();
+        std::vector<long long> outputs = prog.pop_all_output();
+        for (int i = 0; i < outputs.size(); i += 3) {
+            long long x = outputs[i];
+            long long y = outputs[i + 1];
+            long long tile_id = outputs[i + 2];
             screen[{(int)x, (int)y}] = (int)tile_id;
             if (tile_id == 3) {
                 paddle_pos = (int)x;
@@ -83,6 +82,7 @@ void solve2(std::vector<std::string> data) {
             std::cout << score << std::endl;
             break;
         }
+        long long input;
         if (ball_pos < paddle_pos) {
             input = -1;
         } else if (ball_pos > paddle_pos) {

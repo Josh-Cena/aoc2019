@@ -6,10 +6,9 @@
 std::vector<std::vector<char>> get_map(const std::string &line) {
     Program prog(line);
     prog.run();
+    std::string output = prog.pop_str_output();
     std::vector<std::vector<char>> map = {{}};
-    while (prog.outputs.size() > 0) {
-        char ch = prog.outputs.front();
-        prog.outputs.pop();
+    for (char ch : output) {
         if (ch == '\n') {
             map.push_back({});
         } else {
@@ -166,24 +165,20 @@ void solve2(std::vector<std::string> data) {
     funcC.pop_back();
     Program prog(data[0]);
     prog.memory[0] = 2;
-    for (char ch : main_routine) {
-        prog.send_input((long long)ch);
-    }
-    prog.send_input((long long)'\n');
-    for (char ch : funcA) {
-        prog.send_input((long long)ch);
-    }
-    prog.send_input((long long)'\n');
-    for (char ch : funcB) {
-        prog.send_input((long long)ch);
-    }
-    prog.send_input((long long)'\n');
-    for (char ch : funcC) {
-        prog.send_input((long long)ch);
-    }
-    prog.send_input((long long)'\n');
-    prog.send_input((long long)'n');
-    prog.send_input((long long)'\n');
+    prog.send_input(main_routine);
+    prog.send_input('\n');
+    prog.send_input(funcA);
+    prog.send_input('\n');
+    prog.send_input(funcB);
+    prog.send_input('\n');
+    prog.send_input(funcC);
+    prog.send_input("\nn\n");
     prog.run();
-    std::cout << prog.outputs.back() << std::endl;
+    long long output = prog.peek_last_output();
+    if (output > 255) {
+        std::cout << output << std::endl;
+    } else {
+        std::string output = prog.pop_str_output();
+        std::cout << output;
+    }
 }
